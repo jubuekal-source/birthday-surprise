@@ -8,346 +8,488 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#0a0e1a;color:#fff;font-family:'Segoe UI',system-ui,sans-serif;overflow-x:hidden;min-height:100vh}
+body{background:#0a0e1a;color:#fff;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;overflow-x:hidden;min-height:100vh}
+#app{max-width:500px;margin:0 auto;padding:0 0 40px}
+.screen{display:none}.screen.active{display:block;animation:fadeUp .8s ease-out}
+button{font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-@keyframes glow{0%,100%{text-shadow:0 0 20px rgba(255,107,53,0.5)}50%{text-shadow:0 0 40px rgba(255,107,53,0.8),0 0 60px rgba(255,215,0,0.3)}}
+@keyframes glow{0%,100%{text-shadow:0 0 20px rgba(255,107,53,.5)}50%{text-shadow:0 0 40px rgba(255,107,53,.8),0 0 60px rgba(255,215,0,.3)}}
 @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
 @keyframes cfall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
-@keyframes pop{0%{transform:scale(0.5);opacity:0}50%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
-@keyframes af{0%,100%{background:rgba(180,0,0,0.9)}50%{background:rgba(255,0,0,0.95)}}
+@keyframes pop{0%{transform:scale(.5);opacity:0}50%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
+@keyframes af{0%,100%{background:rgba(180,0,0,.9)}50%{background:rgba(255,0,0,.95)}}
 @keyframes gli{0%{transform:translate(0)}25%{transform:translate(-4px,3px)}50%{transform:translate(4px,-3px)}75%{transform:translate(-2px,4px)}100%{transform:translate(0)}}
 @keyframes burn{0%{opacity:1;filter:brightness(1)}30%{filter:brightness(2)}60%{filter:brightness(4) saturate(3)}80%{filter:brightness(2) hue-rotate(40deg)}100%{opacity:0;filter:brightness(0)}}
 @keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+@keyframes roastIn{from{opacity:0;transform:translateY(10px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+.hf{font-family:'Bebas Neue',Impact,'Arial Black',sans-serif}
+.pbtn{padding:14px 32px;font-size:17px;font-weight:bold;color:#fff;border-radius:12px;border:none;background:linear-gradient(135deg,#ff6b35,#ff4444);box-shadow:0 4px 20px rgba(255,107,53,.4);letter-spacing:1px}
+.pbtn:active{transform:scale(.96)}
+.progress-bar{height:4px;background:rgba(255,255,255,.1);border-radius:2px;margin:0 16px 10px}
+.progress-fill{height:100%;border-radius:2px;transition:width .5s}
+.pin-dot{width:36px;height:44px;border-radius:8px;border:2px solid #555;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;font-family:monospace}
+.pin-dot.filled{background:rgba(255,107,53,.3)}
+.pin-btn{width:50px;height:44px;font-size:18px;color:#fff;border-radius:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15)}
+.pin-btn:active{background:rgba(255,255,255,.2)}
+.quiz-btn{padding:12px 16px;font-size:15px;text-align:left;color:#fff;border-radius:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);display:flex;align-items:center;gap:10px;width:100%}
+.quiz-btn:active{background:rgba(255,255,255,.12)}
+.quiz-btn.correct{background:rgba(34,197,94,.3);border-color:#22c55e}
+.quiz-btn.wrong{background:rgba(239,68,68,.3);border-color:#ef4444}
+.overlay{position:fixed;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;z-index:10000}
+.alarm-text{font-family:'Courier New',monospace;font-weight:bold;color:#fff;text-align:center}
+.confetti-piece{position:absolute;top:-20px}
+.mode-btn{display:block;width:100%;padding:20px;border-radius:16px;text-align:left;color:#fff;margin-bottom:12px}
+.mode-btn:active{opacity:.9}
+.tour-section{background:rgba(0,0,0,.3);border-radius:12px;padding:16px;margin-bottom:12px}
+.tour-item{color:#ccc;font-size:14px;line-height:2}
+.tour-item strong{color:#ffd700}
 </style>
 </head>
 <body>
-<div id="root"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
-<script type="text/babel">
-var useState = React.useState;
-var useEffect = React.useEffect;
+<div id="app"></div>
 
-var PIN = "4321";
+<script>
+// ─── DATA ──────────────────────────────────────────────────
+var PIN = '4321';
 var MAX_ATTEMPTS = 3;
 
 var CHALLENGES = [
-  {
-    title: "Auf die Plätze...",
-    icon: "🏃",
-    setup: "Johannes: Geh in die Sprinter-Startposition!\n\nAlle anderen: Zählt laut den Countdown!",
-    countdown: true,
-    reveal: "🎤 SINGE JETZT „HAPPY BIRTHDAY" SO LAUT,\nDASS MINDESTENS 5 LEUTE MITSINGEN!",
-    juryNote: "Jury: Hat Johannes 5 Mitsänger bekommen?",
-  },
-  {
-    title: "Der Staffellauf",
-    icon: "🧻",
-    setup: null,
-    countdown: false,
-    reveal: "Johannes erhält eine KLOPAPIERROLLE als Staffelstab.\n\n🏆 Mission: Überreiche sie einer WILDFREMDEN Person\nmit einer überzeugenden Geschichte,\nwarum diese Person die Rolle JETZT UNBEDINGT braucht!\n\nDie Person muss die Rolle annehmen!",
-    juryNote: "Jury: Hat die fremde Person die Rolle angenommen?",
-  },
-  {
-    title: "Der Hürdenlauf",
-    icon: "🍺",
-    setup: null,
-    countdown: false,
-    reveal: "3 Partygäste stellen sich gebückt als HÜRDEN auf.\n\n🏅 Mission: Steige RÜCKWÄRTS über alle 3 Hürden –\nmit einem VOLLEN GETRÄNK in der Hand!\n\nBonuspunkte wenn nichts verschüttet wird!",
-    juryNote: "Jury: Hat Johannes alle Hürden rückwärts überquert?",
-  },
-  {
-    title: "Der Gipfelruf",
-    icon: "🗻",
-    setup: null,
-    countdown: false,
-    reveal: "Finde eine ERHÖHTE POSITION\n(Stuhl, Treppe, Podest...)\n\n📢 JODLE SO LANGE UND SO LAUT,\nBIS MINDESTENS 3 LEUTE ZURÜCKJODELN!\n\nHolladihi-iii! 🎶",
-    juryNote: "Jury: Haben mindestens 3 Leute zurückgejodelt?",
-  },
-  {
-    title: "Die Gipfel-Pyramide",
-    icon: "🏔️",
-    setup: null,
-    countdown: false,
-    reveal: "🏆 DIE FINALE CHALLENGE!\n\n👥 Organisiere eine MENSCHENPYRAMIDE\nmit 3 STOCKWERKEN!\n\nDU musst selbst Teil der Pyramide sein!\n\n📸 Fotonachweis erforderlich!",
-    juryNote: "Jury: Steht die Pyramide? Ist Johannes dabei?",
-  },
+  {title:'Auf die Plätze...',icon:'🏃',setup:'Johannes: Geh in die Sprinter-Startposition!\n\nAlle anderen: Zählt laut den Countdown!',countdown:true,reveal:'🎤 SINGE JETZT „HAPPY BIRTHDAY" SO LAUT,\nDASS MINDESTENS 5 LEUTE MITSINGEN!',juryNote:'Jury: Hat Johannes 5 Mitsänger bekommen?'},
+  {title:'Der Staffellauf',icon:'🧻',setup:null,countdown:false,reveal:'Johannes erhält eine KLOPAPIERROLLE als Staffelstab.\n\n🏆 Mission: Überreiche sie einer WILDFREMDEN Person\nmit einer überzeugenden Geschichte,\nwarum diese Person die Rolle JETZT UNBEDINGT braucht!\n\nDie Person muss die Rolle annehmen!',juryNote:'Jury: Hat die fremde Person die Rolle angenommen?'},
+  {title:'Der Hürdenlauf',icon:'🍺',setup:null,countdown:false,reveal:'3 Partygäste stellen sich gebückt als HÜRDEN auf.\n\n🏅 Mission: Steige RÜCKWÄRTS über alle 3 Hürden –\nmit einem VOLLEN GETRÄNK in der Hand!\n\nBonuspunkte wenn nichts verschüttet wird!',juryNote:'Jury: Hat Johannes alle Hürden rückwärts überquert?'},
+  {title:'Der Gipfelruf',icon:'🗻',setup:null,countdown:false,reveal:'Finde eine ERHÖHTE POSITION\n(Stuhl, Treppe, Podest...)\n\n📢 JODLE SO LANGE UND SO LAUT,\nBIS MINDESTENS 3 LEUTE ZURÜCKJODELN!\n\nHolladihi-iii! 🎶',juryNote:'Jury: Haben mindestens 3 Leute zurückgejodelt?'},
+  {title:'Die Gipfel-Pyramide',icon:'🏔️',setup:null,countdown:false,reveal:'🏆 DIE FINALE CHALLENGE!\n\n👥 Organisiere eine MENSCHENPYRAMIDE\nmit 3 STOCKWERKEN!\n\nDU musst selbst Teil der Pyramide sein!\n\n📸 Fotonachweis erforderlich!',juryNote:'Jury: Steht die Pyramide? Ist Johannes dabei?'}
 ];
 
 var QUIZ = [
-  { q: "In welchem Land wurde Hobby Horsing erfunden?", opts: ["Schweden", "Island", "Finnland", "Deutschland"], answer: 2 },
-  { q: "Wie groß ist ein offizielles Hobby Horsing Dressurviereck?", opts: ["20 × 40 m wie beim echten Reiten", "7 × 14 Meter", "10 × 20 Meter", "3 × 6 m (Wohnzimmer-Edition)"], answer: 1 },
-  { q: "Seit wann gibt es in Deutschland einen offiziellen Hobby Horsing Verband?", opts: ["1997", "2008", "2023", "Gibt es gar nicht"], answer: 2 },
-  { q: "Was muss das Hobby Horse beim Galoppieren IMMER berühren?", opts: ["Den Boden", "Den Oberschenkel", "Die Schulter", "Das Herz des Reiters"], answer: 1 },
-  { q: "Welche Disziplin gibt es beim Hobby Horsing NICHT?", opts: ["Dressur", "Springreiten", "Wassergraben-Schwimmen", "Trail"], answer: 2 },
+  {q:'In welchem Land wurde Hobby Horsing erfunden?',opts:['Schweden','Island','Finnland','Deutschland'],answer:2},
+  {q:'Wie groß ist ein offizielles Hobby Horsing Dressurviereck?',opts:['20 × 40 m wie beim echten Reiten','7 × 14 Meter','10 × 20 Meter','3 × 6 m (Wohnzimmer-Edition)'],answer:1},
+  {q:'Seit wann gibt es in Deutschland einen offiziellen Hobby Horsing Verband?',opts:['1997','2008','2023','Gibt es gar nicht'],answer:2},
+  {q:'Was muss das Hobby Horse beim Galoppieren IMMER berühren?',opts:['Den Boden','Den Oberschenkel','Die Schulter','Das Herz des Reiters'],answer:1},
+  {q:'Welche Disziplin gibt es beim Hobby Horsing NICHT?',opts:['Dressur','Springreiten','Wassergraben-Schwimmen','Trail'],answer:2}
 ];
 
 var ROASTS = [
-  "Jo, wie kann man das nicht wissen?!",
-  "Jo, wir sind enttäuscht.",
-  "Einmal mit Profis arbeiten...",
-  "Wir überlegen gerade, ob wir dir das Geschenk noch geben...",
-  "Hast du überhaupt ein Hobby?",
-  "Selbst das Hobby Horse wüsste die Antwort.",
-  "Jo... ernsthaft jetzt?",
-  "Wir hätten auf Minigolf-Gutschein umsteigen sollen.",
-  "OK letzter Tipp: Es ist NICHT die Antwort, die du gerade gedrückt hast.",
-  "Gut dass du hübsch bist, Jo.",
+  'Jo, wie kann man das nicht wissen?!',
+  'Jo, wir sind enttäuscht.',
+  'Einmal mit Profis arbeiten...',
+  'Wir überlegen gerade, ob wir dir das Geschenk noch geben...',
+  'Hast du überhaupt ein Hobby?',
+  'Selbst das Hobby Horse wüsste die Antwort.',
+  'Jo... ernsthaft jetzt?',
+  'Wir hätten auf Minigolf-Gutschein umsteigen sollen.',
+  'OK letzter Tipp: Es ist NICHT die Antwort, die du gerade gedrückt hast.',
+  'Gut dass du hübsch bist, Jo.'
 ];
 
-var HF = "'Bebas Neue', Impact, 'Arial Black', sans-serif";
+// ─── STATE ─────────────────────────────────────────────────
+var state = {
+  screen: 'landing',
+  mode: null,
+  step: 0,
+  pinInput: '',
+  pinAttempts: 0,
+  quizFails: 0,
+  countdownVal: 3,
+  challengePhase: 'setup',
+  showConfetti: false,
+  summitPhase: 0
+};
 
-function Mountain(props) {
-  var progress = props.progress || 0;
+// ─── SVG MOUNTAIN ──────────────────────────────────────────
+function mountainSVG(progress) {
   var pts = [[100,380],[120,360],[140,330],[160,300],[185,270],[210,245],[230,225],[255,205],[270,185],[285,165],[295,145],[305,125],[310,105],[315,88],[320,72]];
-  var idx = Math.min(Math.floor(progress * (pts.length - 1)), pts.length - 1);
-  var d = "";
-  for (var i = 0; i <= idx; i++) d += (i===0?"M":"L")+pts[i][0]+","+pts[i][1]+" ";
-  var cx = pts[idx][0], cy = pts[idx][1];
+  var idx = Math.min(Math.floor(progress * (pts.length-1)), pts.length-1);
+  var d = '';
+  for (var i=0;i<=idx;i++) d += (i===0?'M':'L')+pts[i][0]+','+pts[i][1]+' ';
+  var cx=pts[idx][0], cy=pts[idx][1];
   var stars = [[140,30],[320,20],[450,50],[80,80],[400,100],[220,55],[50,45],[480,35]];
-  var stubble = [];
-  [-3,-1.5,0,1.5,3].forEach(function(dx,si){[7,8,9].forEach(function(dy,sj){stubble.push([dx,dy,si+"-"+sj]);});});
-
-  return (
-    <svg viewBox="0 0 500 420" style={{width:"100%",maxWidth:500,display:"block",margin:"0 auto"}}>
-      <defs>
-        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0a0e27"/><stop offset="40%" stopColor="#1a1a4e"/><stop offset="70%" stopColor="#2d1b69"/><stop offset="100%" stopColor="#e8683a"/></linearGradient>
-        <linearGradient id="mtn" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#8899aa"/><stop offset="40%" stopColor="#556677"/><stop offset="100%" stopColor="#334455"/></linearGradient>
-        <linearGradient id="mtn2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#667788"/><stop offset="100%" stopColor="#2a3a4a"/></linearGradient>
-        <filter id="gl"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-        <radialGradient id="sg" cx="50%" cy="100%"><stop offset="0%" stopColor="#ffcc44" stopOpacity="0.6"/><stop offset="100%" stopColor="#ffcc44" stopOpacity="0"/></radialGradient>
-      </defs>
-      <rect width="500" height="420" fill="url(#sky)"/>
-      {stars.map(function(s,i){return <circle key={i} cx={s[0]} cy={s[1]} r={1.2} fill="#fff" opacity="0.7"><animate attributeName="opacity" values="0.3;1;0.3" dur={(2+i*0.5)+"s"} repeatCount="indefinite"/></circle>;})}
-      <ellipse cx="315" cy="72" rx="60" ry="40" fill="url(#sg)"/>
-      <polygon points="0,420 50,200 120,280 180,160 250,250 340,100 400,200 470,150 500,220 500,420" fill="url(#mtn2)" opacity="0.5"/>
-      <polygon points="0,420 80,300 150,340 200,250 250,200 280,170 310,110 315,72 320,110 350,160 380,190 420,230 460,280 500,320 500,420" fill="url(#mtn)"/>
-      <polygon points="305,110 315,72 325,110 318,95 312,100" fill="#e8eef4" opacity="0.8"/>
-      <polygon points="280,170 295,145 310,170 300,160" fill="#e8eef4" opacity="0.5"/>
-      <line x1="315" y1="62" x2="315" y2="72" stroke="#ffd700" strokeWidth="2"/><line x1="310" y1="65" x2="320" y2="65" stroke="#ffd700" strokeWidth="2"/>
-      <g transform="translate(175,275)"><polygon points="0,0 -8,8 8,8" fill="#cc8844"/><rect x="-6" y="8" width="12" height="7" fill="#aa6633"/><text x="14" y="10" fontSize="8" fill="#ddd" fontFamily="sans-serif">Hütte</text></g>
-      {progress>0&&<path d={d} fill="none" stroke="#ff6b35" strokeWidth="2.5" strokeDasharray="6,4" filter="url(#gl)" opacity="0.9"/>}
-      {progress>0&&(
-        <g transform={"translate("+cx+","+(cy-34)+")"}>
-          <animateTransform attributeName="transform" type="translate" values={cx+","+(cy-34)+";"+cx+","+(cy-36)+";"+cx+","+(cy-34)} dur="1.2s" repeatCount="indefinite"/>
-          <ellipse cx="0" cy="16" rx="6" ry="8" fill="#2563eb"/><ellipse cx="0" cy="19" rx="5" ry="3.5" fill="#1d4ed8"/>
-          <rect x="-5" y="23" width="4.5" height="10" rx="2" fill="#1e3a5f"/><rect x="0.5" y="23" width="4.5" height="10" rx="2" fill="#1e3a5f"/>
-          <rect x="-6" y="32" width="5" height="3" rx="1" fill="#5c3d2e"/><rect x="1" y="32" width="5" height="3" rx="1" fill="#5c3d2e"/>
-          <circle cx="0" cy="4" r="6" fill="#f0c8a0"/><ellipse cx="-1" cy="1" rx="3" ry="2" fill="#f5d5b5" opacity="0.5"/>
-          <rect x="-5.5" y="1.5" width="4.5" height="4" rx="0.8" fill="none" stroke="#333" strokeWidth="1.2"/>
-          <rect x="1" y="1.5" width="4.5" height="4" rx="0.8" fill="none" stroke="#333" strokeWidth="1.2"/>
-          <line x1="-1" y1="3.5" x2="1" y2="3.5" stroke="#333" strokeWidth="1"/>
-          <circle cx="-3.2" cy="3.8" r="1.2" fill="#3b82f6"/><circle cx="3.2" cy="3.8" r="1.2" fill="#3b82f6"/>
-          <circle cx="-3.2" cy="3.5" r="0.4" fill="#111"/><circle cx="3.2" cy="3.5" r="0.4" fill="#111"/>
-          <path d="M-2,7.2 Q0,8.8 2,7.2" fill="#d4826a" stroke="#c06050" strokeWidth="0.3"/>
-          {stubble.map(function(s){return <circle key={s[2]} cx={s[0]} cy={s[1]} r="0.35" fill="#c4a050" opacity="0.45"/>;})}
-          <rect x="6.5" y="13.5" width="3" height="2.2" rx="0.5" fill="#777" stroke="#999" strokeWidth="0.4"/>
-          <line x1="-6" y1="12" x2="-8" y2="20" stroke="#f0c8a0" strokeWidth="2" strokeLinecap="round"/>
-          <line x1="6" y1="12" x2="8" y2="20" stroke="#f0c8a0" strokeWidth="2" strokeLinecap="round"/>
-        </g>
-      )}
-      {progress>=1&&(<g transform="translate(315,52)"><line x1="0" y1="0" x2="0" y2="-15" stroke="#ffd700" strokeWidth="1.5"/><polygon points="0,-15 12,-12 0,-9" fill="#ff4444"><animate attributeName="points" values="0,-15 12,-12 0,-9;0,-15 11,-11 0,-8;0,-15 12,-12 0,-9" dur="1s" repeatCount="indefinite"/></polygon></g>)}
-    </svg>
-  );
-}
-
-function Confetti(){
-  var cols=["#ff6b35","#ffd700","#ff4444","#44ff44","#4488ff","#ff44ff","#44ffff"];
-  var pcs=[];for(var i=0;i<50;i++)pcs.push({id:i,x:Math.random()*100,del:Math.random()*2,dur:2+Math.random()*2,col:cols[i%cols.length],sz:4+Math.random()*8});
-  return(<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,pointerEvents:"none",zIndex:9999,overflow:"hidden"}}>{pcs.map(function(p){return<div key={p.id} style={{position:"absolute",left:p.x+"%",top:"-20px",width:p.sz,height:p.sz*0.6,backgroundColor:p.col,borderRadius:p.id%3===0?"50%":"2px",animation:"cfall "+p.dur+"s ease-in "+p.del+"s both"}}/>;})}</div>);
-}
-
-function Alarm(props){
-  var attempts=props.attempts,onDone=props.onDone;
-  var s=useState("flash");var phase=s[0],setPhase=s[1];
-  useEffect(function(){
-    if(attempts>=MAX_ATTEMPTS){setPhase("destruct");var t1=setTimeout(function(){setPhase("psych");},5500);return function(){clearTimeout(t1);};}
-    var t2=setTimeout(onDone,2500);return function(){clearTimeout(t2);};
-  },[attempts]);
-  var ov={position:"fixed",top:0,left:0,right:0,bottom:0,display:"flex",alignItems:"center",justifyContent:"center",zIndex:10000};
-  var tx={fontFamily:"'Courier New',monospace",fontWeight:"bold",fontSize:22,color:"#fff",textAlign:"center"};
-  if(attempts>=MAX_ATTEMPTS&&phase==="destruct")return(
-    <div style={Object.assign({},ov,{background:"#000"})}><div style={{animation:"burn 5.5s ease-in forwards",textAlign:"center"}}>
-      <div style={{fontSize:80,animation:"gli 0.1s infinite, shake 0.2s infinite",color:"#ff4400"}}>💥</div>
-      <div style={Object.assign({},tx,{color:"#ff0000",animation:"gli 0.1s infinite",textShadow:"0 0 30px red",fontSize:26})}>GUTSCHEIN WIRD VERNICHTET...</div>
-      <div style={Object.assign({},tx,{color:"#ff4400",fontSize:16,marginTop:16,animation:"gli 0.15s infinite"})}>ALLE DATEN WERDEN GELÖSCHT</div>
-      <div style={Object.assign({},tx,{color:"#880000",fontSize:14,marginTop:8})}>Vernichtung läuft... bitte warten...</div>
-    </div></div>);
-  if(attempts>=MAX_ATTEMPTS&&phase==="psych")return(
-    <div style={Object.assign({},ov,{background:"rgba(0,0,0,0.95)",cursor:"pointer"})} onClick={onDone}><div style={{textAlign:"center",animation:"fadeUp 0.5s ease-out"}}>
-      <div style={{fontSize:50,marginBottom:16}}>😏</div>
-      <div style={Object.assign({},tx,{color:"#ffd700",fontSize:24,lineHeight:1.6})}>Ach Jo, so leicht kommst du<br/>uns nicht davon...</div>
-      <div style={Object.assign({},tx,{fontSize:18,color:"#ff6b35",marginTop:16})}>Spiel weiter!</div>
-      <div style={Object.assign({},tx,{fontSize:13,color:"#666",marginTop:24})}>Antippen zum Fortfahren</div>
-    </div></div>);
-  return(<div style={ov}><div style={Object.assign({},ov,{animation:"af 0.3s infinite"})}><div style={{textAlign:"center"}}>
-    <div style={{fontSize:60,color:"#fff"}}>🚨</div>
-    <div style={Object.assign({},tx,{textShadow:"0 0 20px rgba(255,0,0,0.8)"})}>ZUGRIFF VERWEIGERT!</div>
-    <div style={Object.assign({},tx,{fontSize:16,marginTop:8})}>{"Noch "+(MAX_ATTEMPTS-attempts)+" Versuch"+(MAX_ATTEMPTS-attempts!==1?"e":"")+" bis zur Selbstzerstörung!"}</div>
-  </div></div></div>);
-}
-
-function PinPad(props){
-  var onCorrect=props.onCorrect,note=props.note;
-  var s1=useState("");var pin=s1[0],setPin=s1[1];
-  var s2=useState(0);var att=s2[0],setAtt=s2[1];
-  var s3=useState(false);var alarm=s3[0],setAlarm=s3[1];
-  function tap(d){
-    if(d==="del"){setPin(function(p){return p.slice(0,-1);});return;}
-    var next=pin+d;if(next.length>4)return;setPin(next);
-    if(next.length===4){if(next===PIN){setTimeout(onCorrect,300);}else{var na=att+1;setAtt(na);setAlarm(true);setPin("");}}
+  var starsHTML = '';
+  for (var s=0;s<stars.length;s++) {
+    starsHTML += '<circle cx="'+stars[s][0]+'" cy="'+stars[s][1]+'" r="1.2" fill="#fff" opacity="0.7"><animate attributeName="opacity" values="0.3;1;0.3" dur="'+(2+s*0.5)+'s" repeatCount="indefinite"/></circle>';
   }
-  var digits=[1,2,3,4,5,6,7,8,9,"_",0,"del"];
-  return(<div style={{textAlign:"center",marginTop:14}}>
-    {alarm&&<Alarm attempts={att} onDone={function(){setAlarm(false);}}/>}
-    <div style={{color:"#ffcc00",fontSize:12,marginBottom:6,fontStyle:"italic"}}>{note}</div>
-    <div style={{color:"#aaa",fontSize:12,marginBottom:10}}>Jury: PIN eingeben</div>
-    <div style={{display:"flex",justifyContent:"center",gap:8,marginBottom:12}}>
-      {[0,1,2,3].map(function(i){return<div key={i} style={{width:36,height:44,borderRadius:8,border:"2px solid #555",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,color:"#fff",fontFamily:"monospace",background:pin.length>i?"rgba(255,107,53,0.3)":"rgba(255,255,255,0.05)"}}>{pin.length>i?"●":""}</div>;})}
-    </div>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(3,50px)",gap:6,justifyContent:"center"}}>
-      {digits.map(function(d,i){var empty=d==="_";return<button key={i} onClick={function(){if(!empty)tap(d==="del"?"del":String(d));}} style={{width:50,height:44,fontSize:18,color:"#fff",cursor:empty?"default":"pointer",fontFamily:"inherit",borderRadius:8,background:empty?"transparent":"rgba(255,255,255,0.1)",border:empty?"none":"1px solid rgba(255,255,255,0.15)",visibility:empty?"hidden":"visible"}}>{d==="del"?"⌫":d==="_"?"":d}</button>;})}
-    </div>
-  </div>);
-}
-
-function ChallengeCard(props){
-  var ch=props.ch,idx=props.idx,total=props.total,onDone=props.onDone;
-  var s1=useState(ch.countdown?"setup":"reveal");var phase=s1[0],setPhase=s1[1];
-  var s2=useState(3);var count=s2[0],setCount=s2[1];
-  useEffect(function(){setPhase(ch.countdown?"setup":"reveal");setCount(3);},[idx]);
-  useEffect(function(){if(phase==="countdown"){if(count>0){var t=setTimeout(function(){setCount(function(c){return c-1;});},1000);return function(){clearTimeout(t);};}setPhase("reveal");}},[phase,count]);
-  var pbtn={padding:"12px 28px",fontSize:16,fontWeight:"bold",color:"#fff",cursor:"pointer",fontFamily:"inherit",borderRadius:12,border:"none",background:"linear-gradient(135deg,#ff6b35,#ff4444)",boxShadow:"0 4px 20px rgba(255,107,53,0.4)"};
-  return(<div style={{padding:"0 16px"}}>
-    <div style={{textAlign:"center",color:"#aaa",fontSize:12,marginBottom:6}}>{"Challenge "+(idx+1)+" von "+total}</div>
-    <div style={{textAlign:"center",fontSize:28,marginBottom:4}}>{ch.icon}</div>
-    <h2 style={{textAlign:"center",color:"#ff6b35",fontFamily:HF,fontSize:22,margin:"0 0 14px"}}>{ch.title}</h2>
-    {phase==="setup"&&<div style={{textAlign:"center"}}><p style={{color:"#ddd",whiteSpace:"pre-line",lineHeight:1.6,fontSize:15}}>{ch.setup}</p><button onClick={function(){setPhase("countdown");}} style={Object.assign({},pbtn,{marginTop:16})}>Countdown starten!</button></div>}
-    {phase==="countdown"&&<div style={{textAlign:"center"}}><div key={count} style={{fontSize:100,fontWeight:"bold",color:"#ff6b35",fontFamily:HF,textShadow:"0 0 40px rgba(255,107,53,0.5)",animation:"pop 0.8s ease-out"}}>{count===0?"LOS!":count}</div></div>}
-    {phase==="reveal"&&<div><div style={{background:"rgba(255,107,53,0.1)",border:"1px solid rgba(255,107,53,0.3)",borderRadius:12,padding:16,marginBottom:12}}><p style={{color:"#fff",whiteSpace:"pre-line",lineHeight:1.7,fontSize:15,margin:0,textAlign:"center"}}>{ch.reveal}</p></div><PinPad onCorrect={onDone} note={ch.juryNote}/></div>}
-  </div>);
-}
-
-function QuizCard(props){
-  var q=props.q,idx=props.idx,total=props.total,onDone=props.onDone;
-  var s1=useState(null);var sel=s1[0],setSel=s1[1];
-  var s2=useState(false);var done=s2[0],setDone=s2[1];
-  var s3=useState(0);var fails=s3[0],setFails=s3[1];
-  var s4=useState("");var roast=s4[0],setRoast=s4[1];
-  useEffect(function(){setSel(null);setDone(false);setFails(0);setRoast("");},[idx]);
-  function pick(i){
-    if(done)return;setSel(i);setDone(true);
-    if(i===q.answer){setRoast("");setTimeout(onDone,1200);}
-    else{var nf=fails+1;setFails(nf);setRoast(ROASTS[Math.min(nf-1,ROASTS.length-1)]);setTimeout(function(){setSel(null);setDone(false);},2200);}
+  var charHTML = '';
+  if (progress > 0) {
+    var stubbleHTML = '';
+    var sdx=[-3,-1.5,0,1.5,3], sdy=[7,8,9];
+    for(var si=0;si<sdx.length;si++) for(var sj=0;sj<sdy.length;sj++) stubbleHTML+='<circle cx="'+sdx[si]+'" cy="'+sdy[sj]+'" r="0.35" fill="#c4a050" opacity="0.45"/>';
+    charHTML = '<g transform="translate('+cx+','+(cy-34)+')">'
+      +'<animateTransform attributeName="transform" type="translate" values="'+cx+','+(cy-34)+';'+cx+','+(cy-36)+';'+cx+','+(cy-34)+'" dur="1.2s" repeatCount="indefinite"/>'
+      +'<ellipse cx="0" cy="16" rx="6" ry="8" fill="#2563eb"/><ellipse cx="0" cy="19" rx="5" ry="3.5" fill="#1d4ed8"/>'
+      +'<rect x="-5" y="23" width="4.5" height="10" rx="2" fill="#1e3a5f"/><rect x="0.5" y="23" width="4.5" height="10" rx="2" fill="#1e3a5f"/>'
+      +'<rect x="-6" y="32" width="5" height="3" rx="1" fill="#5c3d2e"/><rect x="1" y="32" width="5" height="3" rx="1" fill="#5c3d2e"/>'
+      +'<circle cx="0" cy="4" r="6" fill="#f0c8a0"/><ellipse cx="-1" cy="1" rx="3" ry="2" fill="#f5d5b5" opacity="0.5"/>'
+      +'<rect x="-5.5" y="1.5" width="4.5" height="4" rx="0.8" fill="none" stroke="#333" stroke-width="1.2"/>'
+      +'<rect x="1" y="1.5" width="4.5" height="4" rx="0.8" fill="none" stroke="#333" stroke-width="1.2"/>'
+      +'<line x1="-1" y1="3.5" x2="1" y2="3.5" stroke="#333" stroke-width="1"/>'
+      +'<circle cx="-3.2" cy="3.8" r="1.2" fill="#3b82f6"/><circle cx="3.2" cy="3.8" r="1.2" fill="#3b82f6"/>'
+      +'<circle cx="-3.2" cy="3.5" r="0.4" fill="#111"/><circle cx="3.2" cy="3.5" r="0.4" fill="#111"/>'
+      +'<path d="M-2,7.2 Q0,8.8 2,7.2" fill="#d4826a" stroke="#c06050" stroke-width="0.3"/>'
+      +stubbleHTML
+      +'<rect x="6.5" y="13.5" width="3" height="2.2" rx="0.5" fill="#777" stroke="#999" stroke-width="0.4"/>'
+      +'<line x1="-6" y1="12" x2="-8" y2="20" stroke="#f0c8a0" stroke-width="2" stroke-linecap="round"/>'
+      +'<line x1="6" y1="12" x2="8" y2="20" stroke="#f0c8a0" stroke-width="2" stroke-linecap="round"/>'
+      +'</g>';
   }
-  return(<div style={{padding:"0 16px"}}>
-    <div style={{textAlign:"center",color:"#aaa",fontSize:12,marginBottom:10}}>{"Frage "+(idx+1)+" von "+total}</div>
-    <h3 style={{color:"#fff",textAlign:"center",fontSize:17,fontWeight:500,margin:"0 0 18px",lineHeight:1.5}}>{q.q}</h3>
-    <div style={{display:"flex",flexDirection:"column",gap:10}}>
-      {q.opts.map(function(opt,i){
-        var bg="rgba(255,255,255,0.07)",bd="1px solid rgba(255,255,255,0.15)";
-        if(done&&i===sel){if(i===q.answer){bg="rgba(34,197,94,0.3)";bd="1px solid #22c55e";}else{bg="rgba(239,68,68,0.3)";bd="1px solid #ef4444";}}
-        return<button key={i} onClick={function(){pick(i);}} style={{padding:"12px 16px",fontSize:15,textAlign:"left",color:"#fff",cursor:"pointer",fontFamily:"inherit",borderRadius:10,background:bg,border:bd,display:"flex",alignItems:"center",gap:10}}>
-          <span style={{color:"#ff6b35",fontWeight:"bold",fontSize:13,minWidth:20}}>{String.fromCharCode(65+i)}</span><span>{opt}</span></button>;
-      })}
-    </div>
-    {roast&&<div style={{marginTop:14,padding:"10px 14px",background:"rgba(239,68,68,0.15)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:10,textAlign:"center"}}><p style={{color:"#ff6b6b",fontSize:15,margin:0,fontStyle:"italic",lineHeight:1.5}}>{roast}</p></div>}
-  </div>);
+  var routeHTML = progress > 0 ? '<path d="'+d+'" fill="none" stroke="#ff6b35" stroke-width="2.5" stroke-dasharray="6,4" filter="url(#gl)" opacity="0.9"/>' : '';
+  var flagHTML = progress >= 1 ? '<g transform="translate(315,52)"><line x1="0" y1="0" x2="0" y2="-15" stroke="#ffd700" stroke-width="1.5"/><polygon points="0,-15 12,-12 0,-9" fill="#ff4444"><animate attributeName="points" values="0,-15 12,-12 0,-9;0,-15 11,-11 0,-8;0,-15 12,-12 0,-9" dur="1s" repeatCount="indefinite"/></polygon></g>' : '';
+
+  return '<svg viewBox="0 0 500 420" style="width:100%;max-width:500px;display:block;margin:0 auto">'
+    +'<defs>'
+    +'<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0a0e27"/><stop offset="40%" stop-color="#1a1a4e"/><stop offset="70%" stop-color="#2d1b69"/><stop offset="100%" stop-color="#e8683a"/></linearGradient>'
+    +'<linearGradient id="mtn" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8899aa"/><stop offset="40%" stop-color="#556677"/><stop offset="100%" stop-color="#334455"/></linearGradient>'
+    +'<linearGradient id="mtn2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#667788"/><stop offset="100%" stop-color="#2a3a4a"/></linearGradient>'
+    +'<filter id="gl"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+    +'<radialGradient id="sg" cx="50%" cy="100%"><stop offset="0%" stop-color="#ffcc44" stop-opacity="0.6"/><stop offset="100%" stop-color="#ffcc44" stop-opacity="0"/></radialGradient>'
+    +'</defs>'
+    +'<rect width="500" height="420" fill="url(#sky)"/>'
+    +starsHTML
+    +'<ellipse cx="315" cy="72" rx="60" ry="40" fill="url(#sg)"/>'
+    +'<polygon points="0,420 50,200 120,280 180,160 250,250 340,100 400,200 470,150 500,220 500,420" fill="url(#mtn2)" opacity="0.5"/>'
+    +'<polygon points="0,420 80,300 150,340 200,250 250,200 280,170 310,110 315,72 320,110 350,160 380,190 420,230 460,280 500,320 500,420" fill="url(#mtn)"/>'
+    +'<polygon points="305,110 315,72 325,110 318,95 312,100" fill="#e8eef4" opacity="0.8"/>'
+    +'<polygon points="280,170 295,145 310,170 300,160" fill="#e8eef4" opacity="0.5"/>'
+    +'<line x1="315" y1="62" x2="315" y2="72" stroke="#ffd700" stroke-width="2"/><line x1="310" y1="65" x2="320" y2="65" stroke="#ffd700" stroke-width="2"/>'
+    +'<g transform="translate(175,275)"><polygon points="0,0 -8,8 8,8" fill="#cc8844"/><rect x="-6" y="8" width="12" height="7" fill="#aa6633"/><text x="14" y="10" font-size="8" fill="#ddd" font-family="sans-serif">Hütte</text></g>'
+    +routeHTML+charHTML+flagHTML
+    +'</svg>';
 }
 
-function TourDetails(){
+// ─── HELPERS ───────────────────────────────────────────────
+function $(id){return document.getElementById(id)}
+function show(screenId){
+  var all=document.querySelectorAll('.screen');
+  for(var i=0;i<all.length;i++) all[i].classList.remove('active');
+  var el=$(screenId);
+  if(el){el.classList.add('active');el.style.animation='none';el.offsetHeight;el.style.animation='fadeUp .6s ease-out';}
+}
+function getProgress(){
+  var total=state.mode==='party'?CHALLENGES.length:QUIZ.length;
+  if(state.screen==='summit'||state.screen==='details') return 1;
+  return state.step/total;
+}
+function updateMountain(){
+  var el=$('mountain');
+  if(el) el.innerHTML=mountainSVG(getProgress());
+}
+function nl2br(str){return str.replace(/\n/g,'<br>');}
+
+// ─── CONFETTI ──────────────────────────────────────────────
+function showConfetti(){
+  var c=document.createElement('div');
+  c.id='confetti-container';
+  c.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:9999;overflow:hidden';
+  var cols=['#ff6b35','#ffd700','#ff4444','#44ff44','#4488ff','#ff44ff','#44ffff'];
+  for(var i=0;i<50;i++){
+    var p=document.createElement('div');
+    var sz=4+Math.random()*8;
+    p.style.cssText='position:absolute;left:'+Math.random()*100+'%;top:-20px;width:'+sz+'px;height:'+(sz*.6)+'px;background:'+cols[i%cols.length]+';border-radius:'+(i%3===0?'50%':'2px')+';animation:cfall '+(2+Math.random()*2)+'s ease-in '+(Math.random()*2)+'s both';
+    c.appendChild(p);
+  }
+  document.body.appendChild(c);
+}
+function hideConfetti(){var c=$('confetti-container');if(c)c.remove();}
+
+// ─── ALARM OVERLAY ─────────────────────────────────────────
+function showAlarm(attempts){
+  var ov=document.createElement('div');
+  ov.id='alarm-overlay';
+  ov.className='overlay';
+  if(attempts>=MAX_ATTEMPTS){
+    ov.style.background='#000';
+    ov.innerHTML='<div style="animation:burn 5.5s ease-in forwards;text-align:center">'
+      +'<div style="font-size:80px;animation:gli .1s infinite,shake .2s infinite;color:#ff4400">💥</div>'
+      +'<div class="alarm-text" style="font-size:26px;color:#ff0000;animation:gli .1s infinite;text-shadow:0 0 30px red">GUTSCHEIN WIRD VERNICHTET...</div>'
+      +'<div class="alarm-text" style="font-size:16px;color:#ff4400;margin-top:16px;animation:gli .15s infinite">ALLE DATEN WERDEN GELÖSCHT</div>'
+      +'<div class="alarm-text" style="font-size:14px;color:#880000;margin-top:8px">Vernichtung läuft... bitte warten...</div>'
+      +'</div>';
+    document.body.appendChild(ov);
+    setTimeout(function(){
+      ov.style.background='rgba(0,0,0,.95)';ov.style.cursor='pointer';
+      ov.innerHTML='<div style="text-align:center;animation:fadeUp .5s ease-out">'
+        +'<div style="font-size:50px;margin-bottom:16px">😏</div>'
+        +'<div class="alarm-text" style="font-size:24px;color:#ffd700;line-height:1.6">Ach Jo, so leicht kommst du<br>uns nicht davon...</div>'
+        +'<div class="alarm-text" style="font-size:18px;color:#ff6b35;margin-top:16px">Spiel weiter!</div>'
+        +'<div class="alarm-text" style="font-size:13px;color:#666;margin-top:24px">Antippen zum Fortfahren</div>'
+        +'</div>';
+      ov.onclick=function(){ov.remove();};
+    },5500);
+  } else {
+    ov.innerHTML='<div class="overlay" style="animation:af .3s infinite"><div style="text-align:center">'
+      +'<div style="font-size:60px">🚨</div>'
+      +'<div class="alarm-text" style="font-size:22px;text-shadow:0 0 20px rgba(255,0,0,.8)">ZUGRIFF VERWEIGERT!</div>'
+      +'<div class="alarm-text" style="font-size:16px;margin-top:8px">Noch '+(MAX_ATTEMPTS-attempts)+' Versuch'+(MAX_ATTEMPTS-attempts!==1?'e':'')+' bis zur Selbstzerstörung!</div>'
+      +'</div></div>';
+    document.body.appendChild(ov);
+    setTimeout(function(){ov.remove();},2500);
+  }
+}
+
+// ─── PIN PAD ───────────────────────────────────────────────
+function renderPinPad(container, juryNote, onCorrect){
+  state.pinInput='';
+  var html='<div style="text-align:center;margin-top:14px">'
+    +'<div style="color:#ffcc00;font-size:12px;margin-bottom:6px;font-style:italic">'+juryNote+'</div>'
+    +'<div style="color:#aaa;font-size:12px;margin-bottom:10px">Jury: PIN eingeben</div>'
+    +'<div id="pin-dots" style="display:flex;justify-content:center;gap:8px;margin-bottom:12px">';
+  for(var i=0;i<4;i++) html+='<div class="pin-dot" id="dot'+i+'"></div>';
+  html+='</div><div style="display:grid;grid-template-columns:repeat(3,50px);gap:6px;justify-content:center">';
+  var digits=[1,2,3,4,5,6,7,8,9,'',0,'⌫'];
+  for(var d=0;d<digits.length;d++){
+    if(digits[d]==='') html+='<div></div>';
+    else html+='<button class="pin-btn" data-pin="'+digits[d]+'">'+digits[d]+'</button>';
+  }
+  html+='</div></div>';
+  container.innerHTML=html;
+
+  container.querySelectorAll('.pin-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var val=this.getAttribute('data-pin');
+      if(val==='⌫'){state.pinInput=state.pinInput.slice(0,-1);updateDots();return;}
+      if(state.pinInput.length>=4) return;
+      state.pinInput+=val;
+      updateDots();
+      if(state.pinInput.length===4){
+        if(state.pinInput===PIN){setTimeout(onCorrect,300);}
+        else{state.pinAttempts++;showAlarm(state.pinAttempts);state.pinInput='';updateDots();}
+      }
+    });
+  });
+
+  function updateDots(){
+    for(var i=0;i<4;i++){
+      var dot=$('dot'+i);
+      dot.textContent=state.pinInput.length>i?'●':'';
+      dot.className='pin-dot'+(state.pinInput.length>i?' filled':'');
+    }
+  }
+}
+
+// ─── SCREENS ───────────────────────────────────────────────
+function renderLanding(){
+  $('landing').innerHTML='<div style="text-align:center;padding:0 20px">'
+    +'<div id="mountain-landing">'+mountainSVG(0)+'</div>'
+    +'<h1 class="hf" style="font-size:52px;color:#ff6b35;letter-spacing:4px;animation:glow 3s infinite">JOHANNES</h1>'
+    +'<h2 class="hf" style="font-size:28px;color:#ffd700;margin:0 0 8px;letter-spacing:6px;opacity:.9">GIPFELSTURM</h2>'
+    +'<p style="color:#8899aa;font-size:14px;margin:0 0 28px;line-height:1.6">Dein Weg zum Gipfel beginnt hier.<br>Aber zuerst musst du ihn dir verdienen...</p>'
+    +'<button class="pbtn" style="animation:breathe 2s infinite" id="btn-start">ABENTEUER STARTEN</button>'
+    +'</div>';
+  $('btn-start').onclick=function(){state.screen='mode';show('mode');renderMode();};
+}
+
+function renderMode(){
+  $('mountain').innerHTML=mountainSVG(0);
+  $('mode-content').innerHTML='<div style="padding:12px 16px">'
+    +'<h2 class="hf" style="text-align:center;color:#ffd700;font-size:24px;margin:0 0 18px">WÄHLE DEINEN WEG</h2>'
+    +'<button class="mode-btn" id="btn-party" style="border:1px solid rgba(255,107,53,.4);background:linear-gradient(135deg,rgba(255,107,53,.2),rgba(255,68,68,.1))">'
+    +'<div style="font-size:28px;margin-bottom:4px">🎉</div>'
+    +'<div class="hf" style="font-size:22px;color:#ff6b35;margin-bottom:4px">PARTY-MODUS</div>'
+    +'<div style="color:#aaa;font-size:13px;line-height:1.5">5 verrückte Challenges vor Publikum. Die Jury bestätigt per PIN.</div>'
+    +'</button>'
+    +'<button class="mode-btn" id="btn-solo" style="border:1px solid rgba(68,136,255,.3);background:linear-gradient(135deg,rgba(68,136,255,.15),rgba(68,68,255,.1))">'
+    +'<div style="font-size:28px;margin-bottom:4px">🧠</div>'
+    +'<div class="hf" style="font-size:22px;color:#4488ff;margin-bottom:4px">SOLO-MODUS</div>'
+    +'<div style="color:#aaa;font-size:13px;line-height:1.5">5 knifflige Quizfragen. Teste dein Wissen!</div>'
+    +'</button></div>';
+  $('btn-party').onclick=function(){startGame('party');};
+  $('btn-solo').onclick=function(){startGame('solo');};
+}
+
+function startGame(mode){
+  state.mode=mode;state.step=0;state.pinAttempts=0;state.quizFails=0;
+  if(mode==='party'){state.screen='challenge';show('challenge');renderChallenge();}
+  else{state.screen='quiz';show('quiz');renderQuiz();}
+  updateMountain();
+}
+
+function renderChallenge(){
+  var ch=CHALLENGES[state.step];
+  var total=CHALLENGES.length;
+  state.challengePhase=ch.countdown?'setup':'reveal';
+  state.pinInput='';
+
+  var html='<div class="progress-bar"><div class="progress-fill" style="background:linear-gradient(90deg,#ff6b35,#ffd700);width:'+(state.step/total*100)+'%"></div></div>'
+    +'<div style="padding:0 16px">'
+    +'<div style="text-align:center;color:#aaa;font-size:12px;margin-bottom:6px">Challenge '+(state.step+1)+' von '+total+'</div>'
+    +'<div style="text-align:center;font-size:28px;margin-bottom:4px">'+ch.icon+'</div>'
+    +'<h2 class="hf" style="text-align:center;color:#ff6b35;font-size:22px;margin:0 0 14px">'+ch.title+'</h2>'
+    +'<div id="challenge-body"></div></div>';
+  $('challenge-content').innerHTML=html;
+  updateMountain();
+
+  if(ch.countdown){
+    $('challenge-body').innerHTML='<div style="text-align:center">'
+      +'<p style="color:#ddd;white-space:pre-line;line-height:1.6;font-size:15px">'+nl2br(ch.setup)+'</p>'
+      +'<button class="pbtn" id="btn-countdown" style="margin-top:16px">Countdown starten!</button></div>';
+    $('btn-countdown').onclick=function(){runCountdown(ch);};
+  } else {
+    showReveal(ch);
+  }
+}
+
+function runCountdown(ch){
+  state.countdownVal=3;
+  $('challenge-body').innerHTML='<div style="text-align:center"><div id="countdown-num" class="hf" style="font-size:100px;color:#ff6b35;text-shadow:0 0 40px rgba(255,107,53,.5);animation:pop .8s ease-out">3</div></div>';
+  var iv=setInterval(function(){
+    state.countdownVal--;
+    var el=$('countdown-num');
+    if(state.countdownVal>0){el.textContent=state.countdownVal;el.style.animation='none';el.offsetHeight;el.style.animation='pop .8s ease-out';}
+    else if(state.countdownVal===0){el.textContent='LOS!';el.style.animation='none';el.offsetHeight;el.style.animation='pop .8s ease-out';}
+    else{clearInterval(iv);showReveal(ch);}
+  },1000);
+}
+
+function showReveal(ch){
+  $('challenge-body').innerHTML='<div style="background:rgba(255,107,53,.1);border:1px solid rgba(255,107,53,.3);border-radius:12px;padding:16px;margin-bottom:12px">'
+    +'<p style="color:#fff;white-space:pre-line;line-height:1.7;font-size:15px;text-align:center">'+nl2br(ch.reveal)+'</p></div>'
+    +'<div id="pin-container"></div>';
+  renderPinPad($('pin-container'), ch.juryNote, function(){advanceStep();});
+}
+
+function renderQuiz(){
+  var q=QUIZ[state.step];
+  var total=QUIZ.length;
+  state.quizFails=0;
+
+  var html='<div class="progress-bar"><div class="progress-fill" style="background:linear-gradient(90deg,#4488ff,#44ffcc);width:'+(state.step/total*100)+'%"></div></div>'
+    +'<div style="padding:0 16px">'
+    +'<div style="text-align:center;color:#aaa;font-size:12px;margin-bottom:10px">Frage '+(state.step+1)+' von '+total+'</div>'
+    +'<h3 style="color:#fff;text-align:center;font-size:17px;font-weight:500;margin:0 0 18px;line-height:1.5">'+q.q+'</h3>'
+    +'<div id="quiz-options" style="display:flex;flex-direction:column;gap:10px"></div>'
+    +'<div id="quiz-roast"></div></div>';
+  $('quiz-content').innerHTML=html;
+  updateMountain();
+  renderQuizOptions(q);
+}
+
+function renderQuizOptions(q){
+  var container=$('quiz-options');
+  container.innerHTML='';
+  for(var i=0;i<q.opts.length;i++){
+    var btn=document.createElement('button');
+    btn.className='quiz-btn';
+    btn.setAttribute('data-idx',i);
+    btn.innerHTML='<span style="color:#ff6b35;font-weight:bold;font-size:13px;min-width:20px">'+String.fromCharCode(65+i)+'</span><span>'+q.opts[i]+'</span>';
+    btn.addEventListener('click',(function(idx){
+      return function(){handleQuizAnswer(q,idx);};
+    })(i));
+    container.appendChild(btn);
+  }
+}
+
+function handleQuizAnswer(q, idx){
+  var btns=document.querySelectorAll('.quiz-btn');
+  btns.forEach(function(b){b.style.pointerEvents='none';});
+  var selected=btns[idx];
+  if(idx===q.answer){
+    selected.classList.add('correct');
+    $('quiz-roast').innerHTML='';
+    setTimeout(function(){advanceStep();},1200);
+  } else {
+    selected.classList.add('wrong');
+    state.quizFails++;
+    var roastIdx=Math.min(state.quizFails-1,ROASTS.length-1);
+    $('quiz-roast').innerHTML='<div style="margin-top:14px;padding:10px 14px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);border-radius:10px;text-align:center;animation:roastIn .3s ease-out">'
+      +'<p style="color:#ff6b6b;font-size:15px;font-style:italic;line-height:1.5">'+ROASTS[roastIdx]+'</p></div>';
+    setTimeout(function(){
+      btns.forEach(function(b){b.style.pointerEvents='';b.classList.remove('wrong');});
+    },2200);
+  }
+}
+
+function advanceStep(){
+  var total=state.mode==='party'?CHALLENGES.length:QUIZ.length;
+  if(state.step+1>=total){
+    state.screen='summit';show('summit');
+    showConfetti();
+    renderSummit();
+  } else {
+    state.step++;state.pinInput='';state.pinAttempts=0;
+    if(state.mode==='party'){renderChallenge();}
+    else{renderQuiz();}
+    updateMountain();
+  }
+}
+
+function renderSummit(){
+  updateMountain();
+  $('summit-content').innerHTML='<div style="text-align:center;padding:0 20px">'
+    +'<h1 class="hf" style="font-size:34px;color:#ffd700;margin:0 0 8px;animation:glow 2s infinite">🏔️ GIPFEL ERREICHT!</h1>'
+    +'<p id="summit-text" style="color:#ff6b35;font-size:18px;margin:0 0 8px;opacity:0">Johannes, du hast es geschafft!</p>'
+    +'<div id="summit-btn-wrap" style="opacity:0">'
+    +'<p style="color:#aaa;font-size:14px;margin:0 0 20px">Und jetzt kommt deine wahre Belohnung...</p>'
+    +'<button class="pbtn" id="btn-reveal">GUTSCHEIN ENTHÜLLEN 🎁</button>'
+    +'</div></div>';
+  setTimeout(function(){
+    var t=$('summit-text');if(t){t.style.opacity='1';t.style.animation='fadeUp .5s ease-out';}
+  },1500);
+  setTimeout(function(){
+    var w=$('summit-btn-wrap');if(w){w.style.opacity='1';w.style.animation='fadeUp .8s ease-out';}
+    $('btn-reveal').onclick=function(){state.screen='details';show('details');hideConfetti();renderDetails();updateMountain();};
+  },3000);
+}
+
+function renderDetails(){
+  updateMountain();
   var items=[
-    ["Tour:","2-Tages-Bergtour mit Hüttenübernachtung"],
-    ["Route:","Ehrwald → Wiener Neustädter Hütte → Stopselzieher → Gipfel (2.962 m)"],
-    ["Höhenmeter:","ca. 1.800 Hm"],
-    ["Klettersteig:","A/B (leicht – du schaffst das!)"],
-    ["Zeitraum:","Ende August – wir klären den Termin!"],
-    ["Übernachtung:","Wiener Neustädter Hütte (2.213 m) – urig & gemütlich"],
-    ["Abstieg:","Seilbahn zum Eibsee – mit Style 😎"],
+    ['Tour:','2-Tages-Bergtour mit Hüttenübernachtung'],
+    ['Route:','Ehrwald → Wiener Neustädter Hütte → Stopselzieher → Gipfel (2.962 m)'],
+    ['Höhenmeter:','ca. 1.800 Hm'],
+    ['Klettersteig:','A/B (leicht – du schaffst das!)'],
+    ['Zeitraum:','Ende August – wir klären den Termin!'],
+    ['Übernachtung:','Wiener Neustädter Hütte (2.213 m) – urig & gemütlich'],
+    ['Abstieg:','Seilbahn zum Eibsee – mit Style 😎']
   ];
-  return(<div style={{padding:"0 12px",maxWidth:500,margin:"0 auto"}}>
-    <div style={{background:"linear-gradient(135deg, rgba(255,107,53,0.15), rgba(255,215,0,0.1))",border:"1px solid rgba(255,107,53,0.3)",borderRadius:16,padding:20}}>
-      <h2 style={{fontFamily:HF,color:"#ffd700",textAlign:"center",fontSize:28,margin:"0 0 4px"}}>🏔️ DEIN GUTSCHEIN</h2>
-      <p style={{color:"#ff6b35",textAlign:"center",fontSize:14,margin:"0 0 16px"}}>Eine unvergessliche Bergtour auf Deutschlands höchsten Gipfel</p>
-      <div style={{borderRadius:12,overflow:"hidden",marginBottom:16,border:"1px solid rgba(255,255,255,0.1)"}}>
-        <img src="img/zugspitze.jpg" alt="Zugspitze Gipfelkreuz" style={{width:"100%",height:200,objectFit:"cover",display:"block"}} onError={function(e){e.target.style.display="none";}}/>
-      </div>
-      <div style={{background:"rgba(0,0,0,0.3)",borderRadius:12,padding:16,marginBottom:12}}>
-        <h3 style={{color:"#ff6b35",fontFamily:HF,fontSize:20,margin:"0 0 12px"}}>Zugspitze über den Stopselzieher</h3>
-        {items.map(function(it,i){return<div key={i} style={{color:"#ccc",fontSize:14,lineHeight:2}}><strong style={{color:"#ffd700"}}>{it[0]}</strong> {it[1]}</div>;})}
-      </div>
-      <div style={{background:"rgba(0,0,0,0.3)",borderRadius:12,padding:16,marginBottom:12}}>
-        <h3 style={{color:"#ff6b35",fontFamily:HF,fontSize:16,margin:"0 0 8px"}}>📅 Tag 1: Aufstieg zur Hütte</h3>
-        <p style={{color:"#bbb",fontSize:13,lineHeight:1.7,margin:0}}>Von der Talstation in Ehrwald durch das Gamskar zur Wiener Neustädter Hütte. Ca. 1.000 Hm, 2,5–3 Stunden. Gemütlich, mit Zeit für die Landschaft. Abends: Hüttenessen, Sonnenuntergang genießen, Vorfreude auf den Gipfeltag!</p>
-      </div>
-      <div style={{background:"rgba(0,0,0,0.3)",borderRadius:12,padding:16,marginBottom:12}}>
-        <h3 style={{color:"#ff6b35",fontFamily:HF,fontSize:16,margin:"0 0 8px"}}>⛰️ Tag 2: Gipfelsturm!</h3>
-        <p style={{color:"#bbb",fontSize:13,lineHeight:1.7,margin:0}}>Vom Schneekar durch den legendären Stopselzieher-Klettersteig zum Gipfel. Ca. 750 Hm, 2,5–3 Stunden. Das namensgebende Felsloch ist das Highlight – spektakulär, aber gut gesichert. Oben angekommen: 360° Panorama vom höchsten Punkt Deutschlands! Abstieg bequem mit der Tiroler Zugspitzbahn.</p>
-      </div>
-      <div style={{textAlign:"center",padding:16,borderTop:"1px solid rgba(255,255,255,0.1)",marginTop:8}}>
-        <p style={{color:"#ffd700",fontSize:16,fontFamily:HF,margin:"0 0 4px"}}>Geschenkt mit Liebe von</p>
-        <p style={{color:"#ff6b35",fontSize:22,fontFamily:HF,margin:0}}>Marco & Manu ❤️</p>
-        <p style={{color:"#666",fontSize:11,marginTop:12}}>Hüttenreservierung & Details folgen – freu dich drauf! 🎉</p>
-      </div>
-    </div>
-  </div>);
+  var itemsHTML='';
+  for(var i=0;i<items.length;i++) itemsHTML+='<div class="tour-item"><strong>'+items[i][0]+'</strong> '+items[i][1]+'</div>';
+
+  $('details-content').innerHTML='<div style="padding:0 12px;max-width:500px;margin:0 auto">'
+    +'<div style="background:linear-gradient(135deg,rgba(255,107,53,.15),rgba(255,215,0,.1));border:1px solid rgba(255,107,53,.3);border-radius:16px;padding:20px">'
+    +'<h2 class="hf" style="color:#ffd700;text-align:center;font-size:28px;margin:0 0 4px">🏔️ DEIN GUTSCHEIN</h2>'
+    +'<p style="color:#ff6b35;text-align:center;font-size:14px;margin:0 0 16px">Eine unvergessliche Bergtour auf Deutschlands höchsten Gipfel</p>'
+    +'<div style="border-radius:12px;overflow:hidden;margin-bottom:16px;border:1px solid rgba(255,255,255,.1)">'
+    +'<img src="img/zugspitze.jpg" alt="Zugspitze Gipfelkreuz" style="width:100%;height:200px;object-fit:cover;display:block" onerror="this.parentElement.style.display=\'none\'">'
+    +'</div>'
+    +'<div class="tour-section"><h3 class="hf" style="color:#ff6b35;font-size:20px;margin:0 0 12px">Zugspitze über den Stopselzieher</h3>'+itemsHTML+'</div>'
+    +'<div class="tour-section"><h3 class="hf" style="color:#ff6b35;font-size:16px;margin:0 0 8px">📅 Tag 1: Aufstieg zur Hütte</h3>'
+    +'<p style="color:#bbb;font-size:13px;line-height:1.7">Von der Talstation in Ehrwald durch das Gamskar zur Wiener Neustädter Hütte. Ca. 1.000 Hm, 2,5–3 Stunden. Gemütlich, mit Zeit für die Landschaft. Abends: Hüttenessen, Sonnenuntergang genießen, Vorfreude auf den Gipfeltag!</p></div>'
+    +'<div class="tour-section"><h3 class="hf" style="color:#ff6b35;font-size:16px;margin:0 0 8px">⛰️ Tag 2: Gipfelsturm!</h3>'
+    +'<p style="color:#bbb;font-size:13px;line-height:1.7">Vom Schneekar durch den legendären Stopselzieher-Klettersteig zum Gipfel. Ca. 750 Hm, 2,5–3 Stunden. Das namensgebende Felsloch ist das Highlight – spektakulär, aber gut gesichert. Oben angekommen: 360° Panorama vom höchsten Punkt Deutschlands! Abstieg bequem mit der Tiroler Zugspitzbahn.</p></div>'
+    +'<div style="text-align:center;padding:16px;border-top:1px solid rgba(255,255,255,.1);margin-top:8px">'
+    +'<p class="hf" style="color:#ffd700;font-size:16px;margin:0 0 4px">Geschenkt mit Liebe von</p>'
+    +'<p class="hf" style="color:#ff6b35;font-size:22px">Marco & Manu ❤️</p>'
+    +'<p style="color:#666;font-size:11px;margin-top:12px">Hüttenreservierung & Details folgen – freu dich drauf! 🎉</p>'
+    +'</div></div></div>';
 }
 
-function App(){
-  var s1=useState("landing");var screen=s1[0],setScreen=s1[1];
-  var s2=useState(null);var mode=s2[0],setMode=s2[1];
-  var s3=useState(0);var step=s3[0],setStep=s3[1];
-  var s4=useState(false);var confetti=s4[0],setConfetti=s4[1];
-  var s5=useState(0);var sph=s5[0],setSph=s5[1];
-  var total=mode==="party"?CHALLENGES.length:QUIZ.length;
-  var progress=(screen==="summit"||screen==="details")?1:step/total;
-  function stepDone(){if(step+1>=total){setScreen("summit");setConfetti(true);setSph(0);setTimeout(function(){setSph(1);},1500);setTimeout(function(){setSph(2);},3000);}else{setStep(function(s){return s+1;});}}
-  function startMode(m){setMode(m);setStep(0);setScreen(m==="party"?"challenge":"quiz");}
-  var pbtn={padding:"14px 32px",fontSize:17,fontWeight:"bold",color:"#fff",cursor:"pointer",fontFamily:"inherit",borderRadius:12,border:"none",background:"linear-gradient(135deg,#ff6b35,#ff4444)",boxShadow:"0 4px 20px rgba(255,107,53,0.4)",letterSpacing:1};
-  return(<div style={{minHeight:"100vh",background:"#0a0e1a",color:"#fff",fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
-    {confetti&&<Confetti/>}
-    <div style={{maxWidth:500,margin:"0 auto",padding:"0 0 40px"}}>
-      {screen!=="landing"&&<div style={{animation:"fadeUp 0.8s ease-out"}}><Mountain progress={progress}/></div>}
-      {screen==="landing"&&(<div style={{textAlign:"center",padding:"0 20px",animation:"fadeUp 1s ease-out"}}>
-        <div style={{paddingTop:16}}><Mountain progress={0}/></div>
-        <h1 style={{fontFamily:HF,fontSize:52,color:"#ff6b35",margin:"0",letterSpacing:4,animation:"glow 3s infinite"}}>JOHANNES</h1>
-        <h2 style={{fontFamily:HF,fontSize:28,color:"#ffd700",margin:"0 0 8px",letterSpacing:6,opacity:0.9}}>GIPFELSTURM</h2>
-        <p style={{color:"#8899aa",fontSize:14,margin:"0 0 28px",lineHeight:1.6}}>Dein Weg zum Gipfel beginnt hier.<br/>Aber zuerst musst du ihn dir verdienen...</p>
-        <button onClick={function(){setScreen("mode");}} style={Object.assign({},pbtn,{animation:"breathe 2s infinite"})}>ABENTEUER STARTEN</button>
-      </div>)}
-      {screen==="mode"&&(<div style={{padding:"12px 16px",animation:"fadeUp 0.6s ease-out"}}>
-        <h2 style={{fontFamily:HF,textAlign:"center",color:"#ffd700",fontSize:24,margin:"0 0 18px"}}>WÄHLE DEINEN WEG</h2>
-        <button onClick={function(){startMode("party");}} style={{display:"block",width:"100%",padding:20,borderRadius:16,textAlign:"left",color:"#fff",cursor:"pointer",fontFamily:"inherit",marginBottom:12,border:"1px solid rgba(255,107,53,0.4)",background:"linear-gradient(135deg,rgba(255,107,53,0.2),rgba(255,68,68,0.1))"}}>
-          <div style={{fontSize:28,marginBottom:4}}>🎉</div>
-          <div style={{fontFamily:HF,fontSize:22,color:"#ff6b35",marginBottom:4}}>PARTY-MODUS</div>
-          <div style={{color:"#aaa",fontSize:13,lineHeight:1.5}}>5 verrückte Challenges vor Publikum. Die Jury bestätigt per PIN.</div>
-        </button>
-        <button onClick={function(){startMode("solo");}} style={{display:"block",width:"100%",padding:20,borderRadius:16,textAlign:"left",color:"#fff",cursor:"pointer",fontFamily:"inherit",border:"1px solid rgba(68,136,255,0.3)",background:"linear-gradient(135deg,rgba(68,136,255,0.15),rgba(68,68,255,0.1))"}}>
-          <div style={{fontSize:28,marginBottom:4}}>🧠</div>
-          <div style={{fontFamily:HF,fontSize:22,color:"#4488ff",marginBottom:4}}>SOLO-MODUS</div>
-          <div style={{color:"#aaa",fontSize:13,lineHeight:1.5}}>5 knifflige Quizfragen. Teste dein Wissen!</div>
-        </button>
-      </div>)}
-      {screen==="challenge"&&(<div key={step} style={{animation:"fadeUp 0.5s ease-out"}}>
-        <div style={{padding:"0 16px",marginBottom:10}}><div style={{height:4,background:"rgba(255,255,255,0.1)",borderRadius:2}}><div style={{height:"100%",borderRadius:2,transition:"width 0.5s",background:"linear-gradient(90deg,#ff6b35,#ffd700)",width:(step/total*100)+"%"}}/></div></div>
-        <ChallengeCard ch={CHALLENGES[step]} idx={step} total={total} onDone={stepDone}/>
-      </div>)}
-      {screen==="quiz"&&(<div key={step} style={{animation:"fadeUp 0.5s ease-out"}}>
-        <div style={{padding:"0 16px",marginBottom:10}}><div style={{height:4,background:"rgba(255,255,255,0.1)",borderRadius:2}}><div style={{height:"100%",borderRadius:2,transition:"width 0.5s",background:"linear-gradient(90deg,#4488ff,#44ffcc)",width:(step/total*100)+"%"}}/></div></div>
-        <QuizCard q={QUIZ[step]} idx={step} total={total} onDone={stepDone}/>
-      </div>)}
-      {screen==="summit"&&(<div style={{textAlign:"center",padding:"0 20px",animation:"fadeUp 0.8s ease-out"}}>
-        {sph>=0&&<h1 style={{fontFamily:HF,fontSize:34,color:"#ffd700",margin:"0 0 8px",animation:"glow 2s infinite"}}>🏔️ GIPFEL ERREICHT!</h1>}
-        {sph>=1&&<p style={{color:"#ff6b35",fontSize:18,margin:"0 0 8px",animation:"fadeUp 0.5s ease-out"}}>Johannes, du hast es geschafft!</p>}
-        {sph>=2&&<div style={{animation:"fadeUp 0.8s ease-out"}}><p style={{color:"#aaa",fontSize:14,margin:"0 0 20px"}}>Und jetzt kommt deine wahre Belohnung...</p><button onClick={function(){setScreen("details");setConfetti(false);}} style={pbtn}>GUTSCHEIN ENTHÜLLEN 🎁</button></div>}
-      </div>)}
-      {screen==="details"&&<div style={{animation:"fadeUp 0.8s ease-out"}}><TourDetails/></div>}
-    </div>
-  </div>);
+// ─── INIT ──────────────────────────────────────────────────
+function init(){
+  $('app').innerHTML=''
+    +'<div class="screen active" id="landing"></div>'
+    +'<div class="screen" id="mode"><div id="mountain" style="animation:fadeUp .8s ease-out"></div><div id="mode-content"></div></div>'
+    +'<div class="screen" id="challenge"><div id="mountain-c"></div><div id="challenge-content"></div></div>'
+    +'<div class="screen" id="quiz"><div id="mountain-q"></div><div id="quiz-content"></div></div>'
+    +'<div class="screen" id="summit"><div id="mountain-s"></div><div id="summit-content"></div></div>'
+    +'<div class="screen" id="details"><div id="mountain-d"></div><div id="details-content"></div></div>';
+
+  // All non-landing screens share a mountain reference
+  var mtnContainers=['mountain-c','mountain-q','mountain-s','mountain-d'];
+  for(var i=0;i<mtnContainers.length;i++){
+    $(mtnContainers[i]).style.animation='fadeUp .8s ease-out';
+  }
+
+  // Override updateMountain to update all mountain containers
+  updateMountain=function(){
+    var svg=mountainSVG(getProgress());
+    var ids=['mountain','mountain-c','mountain-q','mountain-s','mountain-d'];
+    for(var i=0;i<ids.length;i++){var el=$(ids[i]);if(el)el.innerHTML=svg;}
+  };
+
+  renderLanding();
+  show('landing');
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
